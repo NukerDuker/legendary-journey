@@ -3,17 +3,20 @@ package hw02unpackstring
 import (
 	"errors"
 	"strings"
+
+	"github.com/rivo/uniseg"
 )
 
 var (
 	ErrInvalidString = errors.New("invalid string")
-	nums             = map[rune]int{'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9}
+	nums             = map[string]int{"0": 0, "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9}
 )
 
 func Unpack(s string) (string, error) {
-	// Place your code here.
 	unpacked := &strings.Builder{}
-	unpacked, err := iterateStringAndUnpackRunes(s, unpacked)
+	gr := uniseg.NewGraphemes(s)
+	glifs := convertToGlifs(gr)
+	unpacked, err := unpackGlifs(glifs, unpacked)
 	if err != nil {
 		return unpacked.String(), err
 	}
@@ -21,33 +24,50 @@ func Unpack(s string) (string, error) {
 	return unpacked.String(), nil
 }
 
-func iterateStringAndUnpackRunes(s string, unpacked *strings.Builder) (*strings.Builder, error) {
-	r := []rune(s)
-	for i := 0; i < len(r); i++ {
-		num, ok := nums[r[i]]
-		if ok && i > 0 {
-			return handleNum(r, unpacked, num, i)
-		} else if curRune := r[i]; curRune == '\\' {
-			unpacked, err := handleEscapeSlash(r, unpacked, i)
+func convertToGlifs(gr *uniseg.Graphemes) []string {
+	var glifs []string
+	for gr.Next() {
+		glifs = append(glifs, gr.Str())
+	}
+	return glifs
+}
+
+func unpackGlifs(glifs []string, unpacked *strings.Builder) (*strings.Builder, error) {
+	for i := 0; i < len(glifs); i++ {
+		num, ok := nums[glifs[i]]
+		switch {
+		case ok && i > 0:
+			unpacked, err := handleNum(glifs, unpacked, num, i)
+			if err != nil {
+				return unpacked, err
+			}
+
+		case func() bool {
+			curGlif := glifs[i]
+			return curGlif == "\\"
+		}():
+			unpacked, err := handleEscapeSlash(glifs, unpacked, i)
 			if err != nil {
 				return unpacked, err
 			}
 			i++
-		} else if ok && i == 0 {
+
+		case ok && i == 0:
 			return unpacked, ErrInvalidString
-		} else {
-			unpacked.WriteRune(r[i])
+
+		default:
+			unpacked.WriteString(glifs[i])
 		}
 	}
 	return unpacked, nil
 }
 
-func handleNum(r []rune, unpacked *strings.Builder, num int, i int) (*strings.Builder, error) {
-	prevRune := string(r[i-1])
-	isLastRune := i == len(r)-1
+func handleNum(glifs []string, unpacked *strings.Builder, num int, i int) (*strings.Builder, error) {
+	prevRune := glifs[i-1]
+	isLastRune := i == len(glifs)-1
 	if !isLastRune {
-		nextRune := r[i+1]
-		_, ok := nums[nextRune]
+		nextGlif := glifs[i+1]
+		_, ok := nums[nextGlif]
 		if ok {
 			return unpacked, ErrInvalidString
 		}
@@ -69,12 +89,12 @@ func removeLastRune(unpacked *strings.Builder) *strings.Builder {
 	return unpacked
 }
 
-func handleEscapeSlash(r []rune, unpacked *strings.Builder, i int) (*strings.Builder, error) {
-	nextRune := r[i+1]
-	_, ok := nums[nextRune]
-	if !ok && nextRune != '\\' {
+func handleEscapeSlash(glifs []string, unpacked *strings.Builder, i int) (*strings.Builder, error) {
+	nextGlif := glifs[i+1]
+	_, ok := nums[nextGlif]
+	if !ok && nextGlif != "\\" {
 		return unpacked, ErrInvalidString
 	}
-	unpacked.WriteRune(nextRune)
+	unpacked.WriteString(nextGlif)
 	return unpacked, nil
 }
