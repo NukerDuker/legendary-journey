@@ -5,8 +5,10 @@ import (
 	"strings"
 )
 
-var ErrInvalidString = errors.New("invalid string")
-var nums = map[rune]int{'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9}
+var (
+	ErrInvalidString = errors.New("invalid string")
+	nums             = map[rune]int{'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9}
+)
 
 func Unpack(s string) (string, error) {
 	// Place your code here.
@@ -24,10 +26,7 @@ func iterateStringAndUnpackRunes(s string, unpacked *strings.Builder) (*strings.
 	for i := 0; i < len(r); i++ {
 		num, ok := nums[r[i]]
 		if ok && i > 0 {
-			unpacked, err := handleNum(r, unpacked, num, i)
-			if err != nil {
-				return unpacked, err
-			}
+			return handleNum(r, unpacked, num, i)
 		} else if curRune := r[i]; curRune == '\\' {
 			unpacked, err := handleEscapeSlash(r, unpacked, i)
 			if err != nil {
