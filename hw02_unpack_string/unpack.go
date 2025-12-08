@@ -73,7 +73,7 @@ func handleNum(glifs []string, unpacked *strings.Builder, num int, i int) (*stri
 		}
 	}
 	if num == 0 {
-		unpacked = removeLastRune(unpacked)
+		unpacked = removeLastRune(unpacked, i)
 	}
 	for i := 0; i < num-1; i++ {
 		unpacked.WriteString(prevRune)
@@ -81,11 +81,17 @@ func handleNum(glifs []string, unpacked *strings.Builder, num int, i int) (*stri
 	return unpacked, nil
 }
 
-func removeLastRune(unpacked *strings.Builder) *strings.Builder {
-	runeArr := []rune(unpacked.String())
-	runeArr = runeArr[:len(runeArr)-1]
+func removeLastRune(unpacked *strings.Builder, i int) *strings.Builder {
+	gr := uniseg.NewGraphemes(unpacked.String())
+	glifs := convertToGlifs(gr)
 	unpacked.Reset()
-	unpacked.WriteString(string(runeArr))
+	if len(glifs) == 1 {
+		return unpacked
+	}
+	glifs = glifs[:len(glifs)-1]
+	for _, g := range glifs {
+		unpacked.WriteString(g)
+	}
 	return unpacked
 }
 
