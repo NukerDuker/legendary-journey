@@ -73,7 +73,7 @@ func handleNum(glifs []string, unpacked *strings.Builder, num int, i int) (*stri
 		}
 	}
 	if num == 0 {
-		unpacked = removeLastRune(unpacked, i)
+		unpacked = removeLastRune(unpacked)
 	}
 	for i := 0; i < num-1; i++ {
 		unpacked.WriteString(prevRune)
@@ -81,7 +81,7 @@ func handleNum(glifs []string, unpacked *strings.Builder, num int, i int) (*stri
 	return unpacked, nil
 }
 
-func removeLastRune(unpacked *strings.Builder, i int) *strings.Builder {
+func removeLastRune(unpacked *strings.Builder) *strings.Builder {
 	gr := uniseg.NewGraphemes(unpacked.String())
 	glifs := convertToGlifs(gr)
 	unpacked.Reset()
