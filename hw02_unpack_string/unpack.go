@@ -7,9 +7,7 @@ import (
 	"github.com/rivo/uniseg"
 )
 
-var (
-	ErrInvalidString = errors.New("invalid string")
-)
+var ErrInvalidString = errors.New("invalid string")
 
 func Unpack(s string) (string, error) {
 	unpacked := &strings.Builder{}
