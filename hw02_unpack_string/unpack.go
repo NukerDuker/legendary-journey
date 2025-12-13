@@ -14,21 +14,16 @@ var (
 func Unpack(s string) (string, error) {
 	unpacked := &strings.Builder{}
 	gr := uniseg.NewGraphemes(s)
-	glifs := convertToGlifs(gr)
+	glifs := make([]string, 0, len(s))
+	for gr.Next() {
+		glifs = append(glifs, gr.Str())
+	}
 	unpacked, err := unpackGlifs(glifs, unpacked)
 	if err != nil {
 		return unpacked.String(), err
 	}
 
 	return unpacked.String(), nil
-}
-
-func convertToGlifs(gr *uniseg.Graphemes) []string {
-	var glifs []string
-	for gr.Next() {
-		glifs = append(glifs, gr.Str())
-	}
-	return glifs
 }
 
 func unpackGlifs(glifs []string, unpacked *strings.Builder) (*strings.Builder, error) {
@@ -84,7 +79,10 @@ func handleNum(glifs []string, unpacked *strings.Builder, num int, i int) (*stri
 
 func removeLastRune(unpacked *strings.Builder) *strings.Builder {
 	gr := uniseg.NewGraphemes(unpacked.String())
-	glifs := convertToGlifs(gr)
+	glifs := make([]string, 0, len(unpacked.String()))
+	for gr.Next() {
+		glifs = append(glifs, gr.Str())
+	}
 	unpacked.Reset()
 	if len(glifs) == 1 {
 		return unpacked
