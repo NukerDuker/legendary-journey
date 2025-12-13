@@ -9,7 +9,6 @@ import (
 
 var (
 	ErrInvalidString = errors.New("invalid string")
-	nums             = map[string]int{"0": 0, "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9}
 )
 
 func Unpack(s string) (string, error) {
@@ -34,10 +33,12 @@ func convertToGlifs(gr *uniseg.Graphemes) []string {
 
 func unpackGlifs(glifs []string, unpacked *strings.Builder) (*strings.Builder, error) {
 	for i := 0; i < len(glifs); i++ {
-		num, ok := nums[glifs[i]]
+		num := glifs[i]
+		isNum := len(num) == 1 && num[0] >= '0' && num[0] <= '9'
 		switch {
-		case ok && i > 0:
-			unpacked, err := handleNum(glifs, unpacked, num, i)
+		case isNum && i > 0:
+			digit := int(num[0] - '0')
+			unpacked, err := handleNum(glifs, unpacked, digit, i)
 			if err != nil {
 				return unpacked, err
 			}
@@ -52,7 +53,7 @@ func unpackGlifs(glifs []string, unpacked *strings.Builder) (*strings.Builder, e
 			}
 			i++
 
-		case ok && i == 0:
+		case isNum && i == 0:
 			return unpacked, ErrInvalidString
 
 		default:
@@ -67,8 +68,8 @@ func handleNum(glifs []string, unpacked *strings.Builder, num int, i int) (*stri
 	isLastRune := i == len(glifs)-1
 	if !isLastRune {
 		nextGlif := glifs[i+1]
-		_, ok := nums[nextGlif]
-		if ok {
+		isNum := len(nextGlif) == 1 && nextGlif[0] >= '0' && nextGlif[0] <= '9'
+		if isNum {
 			return unpacked, ErrInvalidString
 		}
 	}
@@ -97,8 +98,8 @@ func removeLastRune(unpacked *strings.Builder) *strings.Builder {
 
 func handleEscapeSlash(glifs []string, unpacked *strings.Builder, i int) (*strings.Builder, error) {
 	nextGlif := glifs[i+1]
-	_, ok := nums[nextGlif]
-	if !ok && nextGlif != "\\" {
+	isNum := len(nextGlif) == 1 && nextGlif[0] >= '0' && nextGlif[0] <= '9'
+	if !isNum && nextGlif != "\\" {
 		return unpacked, ErrInvalidString
 	}
 	unpacked.WriteString(nextGlif)
